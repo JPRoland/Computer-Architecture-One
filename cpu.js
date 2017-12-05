@@ -3,6 +3,10 @@ const SET  = 0b00000010;
 const SAVE = 0b00000100;
 const MUL  = 0b00000101;
 const PRN  = 0b00000110;
+const PRA  = 0b00000111;
+const ADD  = 0b00001000;
+const SUB  = 0b00001001;
+const DIV  = 0b00001010;
 const HALT = 0b00000000;
 
 class CPU {
@@ -23,7 +27,11 @@ class CPU {
       [SET]: this.SET,
       [SAVE]: this.SAVE,
       [MUL]: this.MUL,
+      [ADD]: this.ADD,
+      [SUB]: this.SUB,
+      [DIV]: this.DIV,
       [PRN]: this.PRN,
+      [PRA]: this.PRA,
       [HALT]: this.HALT
     };
   }
@@ -33,7 +41,7 @@ class CPU {
   }
 
   startClock() {
-    this.clock = setInterval(() => { this.tick() }, 500);
+    this.clock = setInterval(() => { this.tick() }, 1);
   }
 
   stopClock() {
@@ -55,7 +63,6 @@ class CPU {
   }
 
   INIT() {
-    console.log('INIT');
     this.curReg = 0;
 
     this.reg.PC++;
@@ -63,7 +70,6 @@ class CPU {
 
   SET() {
     const reg = this.mem[this.reg.PC + 1];
-    console.log(`SET ${reg}`);
 
     this.curReg = reg;
 
@@ -72,7 +78,6 @@ class CPU {
 
   SAVE() {
     const val = this.mem[this.reg.PC + 1];
-    console.log(`SAVE ${val}`);
 
     this.reg[this.curReg] = val;
 
@@ -82,16 +87,51 @@ class CPU {
   MUL() {
     const r0 = this.reg[this.mem[this.reg.PC + 1]];
     const r1 = this.reg[this.mem[this.reg.PC + 2]];
-    const val = r0 * r1;
-    console.log(`MUL ${r0} ${r1}`);
 
-    this.reg[this.curReg] = val;
+    this.reg[this.curReg] = r0 * r1;
 
     this.reg.PC += 3;
   }
 
+  ADD() {
+    const r0 = this.reg[this.mem[this.reg.PC + 1]];
+    const r1 = this.reg[this.mem[this.reg.PC + 2]];
+
+    this.reg[this.curReg] = r0 + r1;
+
+    this.reg.PC += 3;
+  }
+
+  SUB() {
+    const r0 = this.reg[this.mem[this.reg.PC + 1]];
+    const r1 = this.reg[this.mem[this.reg.PC + 2]];
+
+    this.reg[this.curReg] = r0 - r1;
+
+    this.reg.PC += 3;
+  }
+
+  DIV() {
+    const r0 = this.reg[this.mem[this.reg.PC + 1]];
+    const r1 = this.reg[this.mem[this.reg.PC + 2]];
+    if (r1 === 0) {
+      console.error('ERROR: Divided by zero, you broke the universe.');
+      this.HALT();
+    }
+
+    this.reg[this.curReg] = r0 / r1;
+
+    this.reg.PC += 3;
+  }
+
+  PRA() {
+    process.stdout.write(String.fromCharCode(this.reg[this.curReg]));
+
+    this.reg.PC++;
+  }
+
   PRN() {
-    console.log(`PRN ${parseInt(this.reg[this.curReg], 10)}`);
+    console.log(parseInt(this.reg[this.curReg], 10));
 
     this.reg.PC++;
   }
