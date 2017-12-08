@@ -6,7 +6,7 @@ const args = process.argv.slice(2);
 
 if (args.length !== 1) {
   console.error('usage: ls8 input-file');
-  process.exit();
+  process.exit(1);
 }
 
 const filename = args[0];

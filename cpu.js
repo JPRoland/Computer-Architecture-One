@@ -7,7 +7,15 @@ const PRA  = 0b00000111;
 const ADD  = 0b00001000;
 const SUB  = 0b00001001;
 const DIV  = 0b00001010;
+const INC  = 0b00001011;
+const DEC  = 0b00001100;
+const PUSH = 0b00001101;
+const POP  = 0b00001110;
+const CALL = 0b00001111;
+const RET  = 0b00010000;
 const HALT = 0b00000000;
+
+const SP = 0xff;
 
 class CPU {
   constructor() {
@@ -30,6 +38,12 @@ class CPU {
       [ADD]: this.ADD,
       [SUB]: this.SUB,
       [DIV]: this.DIV,
+      [INC]: this.INC,
+      [DEC]: this.DEC,
+      [PUSH]: this.PUSH,
+      [POP]: this.POP,
+      [CALL]: this.CALL,
+      [RET]: this.RET,
       [PRN]: this.PRN,
       [PRA]: this.PRA,
       [HALT]: this.HALT
@@ -88,7 +102,7 @@ class CPU {
     const r0 = this.reg[this.mem[this.reg.PC + 1]];
     const r1 = this.reg[this.mem[this.reg.PC + 2]];
 
-    this.reg[this.curReg] = r0 * r1;
+    this.reg[this.curReg] = (r0 * r1) & 0xff;
 
     this.reg.PC += 3;
   }
@@ -97,7 +111,7 @@ class CPU {
     const r0 = this.reg[this.mem[this.reg.PC + 1]];
     const r1 = this.reg[this.mem[this.reg.PC + 2]];
 
-    this.reg[this.curReg] = r0 + r1;
+    this.reg[this.curReg] = (r0 + r1) & 0xff;
 
     this.reg.PC += 3;
   }
@@ -106,7 +120,7 @@ class CPU {
     const r0 = this.reg[this.mem[this.reg.PC + 1]];
     const r1 = this.reg[this.mem[this.reg.PC + 2]];
 
-    this.reg[this.curReg] = r0 - r1;
+    this.reg[this.curReg] = (r0 - r1) & 0xff;
 
     this.reg.PC += 3;
   }
@@ -119,9 +133,54 @@ class CPU {
       this.HALT();
     }
 
-    this.reg[this.curReg] = r0 / r1;
+    this.reg[this.curReg] = ~~(r0 / r1); // Floor result to keep it an integer.
 
     this.reg.PC += 3;
+  }
+
+  INC() {
+    this.reg[this.curReg] = (this.reg[this.curReg] + 1) & 0xff;
+
+    this.reg.PC++;
+  }
+
+  DEC() {
+    this.reg[this.curReg] = (this.reg[this.curReg] - 1) & 0xff;
+
+    this.reg.PC++;
+  }
+
+  _push(val) {
+    SP -= 1;
+    this.mem[SP] = val;
+  }
+
+  PUSH() {
+    this._push(this.reg[this.curReg]);
+    this.reg.PC++;
+  }
+
+  _pop() {
+    const val = this.mem[SP];
+
+    SP += 1;
+
+    return val;
+  }
+
+  POP() {
+    this.reg[this.curReg] = this._pop();
+    this.reg.PC++;
+  }
+
+  CALL() {
+    this._push(this.reg.PC + 1);
+
+    this.reg.PC = this.reg[this.curReg];
+  }
+
+  RET() {
+    this.reg.PC = this._pop();
   }
 
   PRA() {
